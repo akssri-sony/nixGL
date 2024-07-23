@@ -4,12 +4,17 @@
   inputs.flake-utils.url = "github:numtide/flake-utils";
   inputs.nixpkgs.url = "github:nixos/nixpkgs";
 
-  outputs = { self, nixpkgs, flake-utils }:
+  inputs.nvidia-patch = {
+    url = "github:icewind1991/nvidia-patch-nixos";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  outputs = { self, nixpkgs, nvidia-patch, flake-utils }:
     (flake-utils.lib.eachDefaultSystem (system:
       let
         isIntelX86Platform = system == "x86_64-linux";
         pkgs = import ./default.nix {
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = (nixpkgs.legacyPackages.${system}.extend nvidia-patch.overlays.default);
           enable32bits = isIntelX86Platform;
           enableIntelX86Extensions = isIntelX86Platform;
         };

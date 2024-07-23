@@ -16,7 +16,9 @@ enable32bits ? stdenv.hostPlatform.isx86
 , stdenv, writeTextFile, shellcheck, pcre, runCommand, linuxPackages
 , fetchurl, lib, runtimeShell, bumblebee, libglvnd, vulkan-validation-layers
 , mesa, libvdpau-va-gl, intel-media-driver, pkgsi686Linux, driversi686Linux
-, zlib, libdrm, xorg, wayland, gcc, zstd }:
+, zlib, libdrm, xorg, wayland, gcc, zstd
+, nvidia-patch,
+}:
 
 let
   writeExecutable = { name, text }:
@@ -68,7 +70,7 @@ let
     the version of the driver and sha256 sum of the driver installer file.
     */
     nvidiaPackages = { version, sha256 ? null }: rec {
-      nvidiaDrivers = (linuxPackages.nvidia_x11.override { }).overrideAttrs
+      nvidiaDrivers = nvidia-patch.patch-nvenc ((linuxPackages.nvidia_x11.override { }).overrideAttrs
         (oldAttrs: rec {
           pname = "nvidia";
           name = "nvidia-x11-${version}-nixGL";
@@ -82,7 +84,7 @@ let
             builtins.fetchurl url;
           useGLVND = true;
           nativeBuildInputs = oldAttrs.nativeBuildInputs or [] ++ [zstd];
-        });
+        }));
 
       nvidiaLibsOnly = nvidiaDrivers.override {
         libsOnly = true;
